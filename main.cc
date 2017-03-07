@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <ctime>
 #include <vector>
+#include <pthread.h> 
 
 #include <SDL.h>
 
@@ -26,6 +27,9 @@ using namespace std;
 // Gravitational constant
 #define G 1
 
+// Number of worker threads 
+#define NUM_WORKER_THREADS 4 
+
 // Update all stars in the simulation
 void updateStars();
 
@@ -42,6 +46,11 @@ vector<star> stars;
 int x_offset = 0;
 int y_offset = 0;
 
+// Creating barrier 
+pthread_barrier_t barrier;
+
+void* thread_fn (void* threadnum); 
+
 /**
  * Entry point for the program
  * \param argc  The number of command line arguments
@@ -50,19 +59,26 @@ int y_offset = 0;
 int main(int argc, char** argv) {
   // Seed the random number generator
   srand(time(NULL));
-  
+
   // Create a GUI window
   gui ui("Galaxy Simulation", WIDTH, HEIGHT);
-  
+
   // Start with the running flag set to true
   bool running = true;
-  
+
   // Render everything using this bitmap
   bitmap bmp(WIDTH, HEIGHT);
-  
+
   // Save the last time the mouse was clicked
   bool mouse_up = true;
-  
+
+  pthread_barrier_init(&barrier, NULL, NUM_WORKER_THREADS + 1);       
+  pthread_t threads[NUM_WORKER_THREADS]; 
+  for (int i = 0; i < NUM_WORKER_THREADS; i++) {
+    pthread_create(&threads[i], NULL, thread_fn, &i);  
+  }
+
+
   // Loop until we get a quit event
   while(running) {
     // Process events
@@ -71,17 +87,17 @@ int main(int argc, char** argv) {
       // If the event is a quit event, then leave the loop
       if(event.type == SDL_QUIT) running = false;
     }
-    
+
     // Get the current mouse state
     int mouse_x, mouse_y;
     uint32_t mouse_state = SDL_GetMouseState(&mouse_x, &mouse_y);
-    
+
     // If the left mouse button is pressed, create a new random "galaxy"
     if(mouse_state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
       // Only create one if the mouse button has been released
       if(mouse_up) {
         addRandomGalaxy(mouse_x - x_offset, mouse_y - y_offset);
-        
+
         // Don't create another one until the mouse button is released
         mouse_up = false;
       }
@@ -89,60 +105,61 @@ int main(int argc, char** argv) {
       // The mouse button was released
       mouse_up = true;
     }
-    
+
     // Get the keyboard state
     const uint8_t* keyboard = SDL_GetKeyboardState(NULL);
-    
+
     // If the up key is pressed, shift up one pixel
     if(keyboard[SDL_SCANCODE_UP]) {
       y_offset++;
       bmp.shiftDown();  // Shift pixels so scrolling doesn't create trails
     }
-    
+
     // If the down key is pressed, shift down one pixel
     if(keyboard[SDL_SCANCODE_DOWN]) {
       y_offset--;
       bmp.shiftUp();  // Shift pixels so scrolling doesn't create trails
     }
-    
+
     // If the right key is pressed, shift right one pixel
     if(keyboard[SDL_SCANCODE_RIGHT]) {
       x_offset--;
       bmp.shiftLeft();  // Shift pixels so scrolling doesn't create trails
     }
-    
+
     // If the left key is pressed, shift left one pixel
     if(keyboard[SDL_SCANCODE_LEFT]) {
       x_offset++;
       bmp.shiftRight(); // Shift pixels so scrolling doesn't create trails
     }
-    
+
     // Remove stars that have NaN positions
     for(int i=0; i<stars.size(); i++) {
       // Remove this star if it is too far from zero or has NaN position
       if(stars[i].pos().x() != stars[i].pos().x() ||  // A NaN value does not equal itself
-         stars[i].pos().y() != stars[i].pos().y()) {
+          stars[i].pos().y() != stars[i].pos().y()) {
         stars.erase(stars.begin()+i);
         i--;
         continue;
       }
     }
-    
+
     // Compute forces on all stars and update
     updateStars();
-    
+
+
     // Darken the bitmap instead of clearing it to leave trails
     bmp.darken(0.92);
-    
+
     // Draw stars
     for(int i=0; i<stars.size(); i++) {
       drawStar(&bmp, stars[i]);
     }
-    
+
     // Display the rendered frame
     ui.display(bmp);
   }
-  
+
   return 0;
 }
 
@@ -154,10 +171,10 @@ void updateStars() {
       // Short names for star radii
       float r1 = stars[i].radius();
       float r2 = stars[j].radius();
-      
+
       // Compute a vector between the two points
       vec2d diff = stars[i].pos() - stars[j].pos();
-      
+
       // If the objects are too close, merge them
       if(diff.magnitude() < (r1 + r2)) {
         // Replace the ith star with the merged one
@@ -168,36 +185,48 @@ void updateStars() {
       }
     }
   }
-  
-  // Compute the force on each star and update its position and velocity
-  for(int i=0; i<stars.size(); i++) {
-    // Loop over all other stars to compute their effect on this one
-    for(int j=0; j<stars.size(); j++) {
-      // Don't compute the effect of this star on itself
-      if(i == j) continue;
-      
-      // Short names for star masses
-      float m1 = stars[i].mass();
-      float m2 = stars[j].mass();
-      
-      // Compute a vector between the two points
-      vec2d diff = stars[i].pos() - stars[j].pos();
-      
-      // Compute the distance between the two points
-      float dist = diff.magnitude();
-      
-      // Normalize the difference vector to be a unit vector
-      diff = diff.normalized();
-    
-      // Compute the force between these two stars
-      vec2d force = -diff * G * m1 * m2 / pow(dist, 2);
-    
-      // Apply the force to both stars
-      stars[i].addForce(force);
+  pthread_barrier_wait(&barrier); 
+  pthread_barrier_wait(&barrier); 
+}
+// Compute the force on each star and update its position and velocity
+// Loop over all other stars to compute their effect on this one
+void* thread_fn (void* threadnum) {
+  int num = *(int*)threadnum;
+
+  // Waiting for work 
+  while (1) { 
+    pthread_barrier_wait(&barrier);  
+
+    for(int i = 0; i<stars.size(); i++) {
+      if (i % NUM_WORKER_THREADS == num) {
+        for(int j=0; j<stars.size(); j++) {
+          // Don't compute the effect of this star on itself
+          if(i == j) continue;
+
+          // Short names for star masses
+          float m1 = stars[i].mass();
+          float m2 = stars[j].mass();
+
+          // Compute a vector between the two points
+          vec2d diff = stars[i].pos() - stars[j].pos();
+
+          // Compute the distance between the two points
+          float dist = diff.magnitude();
+
+          // Normalize the difference vector to be a unit vector
+          diff = diff.normalized();
+
+          // Compute the force between these two stars
+          vec2d force = -diff * G * m1 * m2 / pow(dist, 2);
+
+          // Apply the force to both stars
+          stars[i].addForce(force);
+        }
+
+        // Update the star's position and velocity
+        stars[i].update(DT);
+      }
     }
-    
-    // Update the star's position and velocity
-    stars[i].update(DT);
   }
 }
 
