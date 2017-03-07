@@ -33,7 +33,7 @@ void updateStars();
 void drawStar(bitmap* bmp, star s);
 
 // Add a "galaxy" of stars to the points list
-void addRandomGalaxy(double center_x, double center_y);
+void addRandomGalaxy(float center_x, float center_y);
 
 // A list of stars being simulated
 vector<star> stars;
@@ -148,24 +148,27 @@ int main(int argc, char** argv) {
 
 // Compute force on all stars and update their positions
 void updateStars() {
-  // Compute force on all stars
+  // Compute the force on each star
   for(int i=0; i<stars.size(); i++) {
-    // Loop over all stars after this one
-    for(int j=i+1; j<stars.size(); j++) {
+    // Loop over all other stars to compute their effect on this one
+    for(int j=0; j<stars.size(); j++) {
+      // Don't compute the effect of this star on itself
+      if(i == j) continue;
+      
       // Short names for important values
-      double m1 = stars[i].mass();
-      double m2 = stars[j].mass();
-      double r1 = stars[i].radius();
-      double r2 = stars[j].radius();
+      float m1 = stars[i].mass();
+      float m2 = stars[j].mass();
+      float r1 = stars[i].radius();
+      float r2 = stars[j].radius();
       
       // Compute a vector between the two points
       vec2d diff = stars[i].pos() - stars[j].pos();
       
       // Compute the distance between the two points
-      double dist = diff.magnitude();
+      float dist = diff.magnitude();
       
       // If the objects are too close, merge them
-      if(dist < (r1 + r2) / 1.5) {
+      if(dist < (r1 + r2)) {
         // Replace the ith star with the merged one
         stars[i] = stars[i].merge(stars[j]);
         // Delete the jth star
@@ -181,41 +184,40 @@ void updateStars() {
       
         // Apply the force to both stars
         stars[i].addForce(force);
-        stars[j].addForce(-force);
       }
     }
   }
   
-  // Update positions and velocities given all accumulated forces
+  // Apply the effects of the current force on each star
   for(int i=0; i<stars.size(); i++) {
     stars[i].update(DT);
   }
 }
 
 // Create a circle of stars moving in the same direction around the center of mass
-void addRandomGalaxy(double center_x, double center_y) {
+void addRandomGalaxy(float center_x, float center_y) {
   // Random number of stars
   int count = rand() % 500 + 500;
   
   // Random radius
-  double radius = drand(50, 200);
+  float radius = drand(50, 200);
   
   // Create a vector for the center of the galaxy
   vec2d center = vec2d(center_x, center_y);
   
   // Clockwise or counter-clockwise?
-  double direction = 1;
+  float direction = 1;
   if(rand() % 2 == 0) direction = -1;
   
   // Create `count` stars
   for(int i=0; i<count; i++) {
     // Generate a random angle
-    double angle = drand(0, M_PI * 2);
+    float angle = drand(0, M_PI * 2);
     // Generate a random radius, biased toward the center
-    double point_radius = drand(0, sqrt(radius)) * drand(0, sqrt(radius));
+    float point_radius = drand(0, sqrt(radius)) * drand(0, sqrt(radius));
     // Compute X and Y coordinates
-    double x = point_radius * sin(angle);
-    double y = point_radius * cos(angle);
+    float x = point_radius * sin(angle);
+    float y = point_radius * cos(angle);
     
     // Create a vector to hold the position of this star (origin at center of the "galaxy")
     vec2d pos = vec2d(x, y);
@@ -233,15 +235,15 @@ void addRandomGalaxy(double center_x, double center_y) {
 // Draw a circle at the given star's position
 // Uses method from http://groups.csail.mit.edu/graphics/classes/6.837/F98/Lecture6/circle.html
 void drawStar(bitmap* bmp, star s) {
-  double center_x = s.pos().x();
-  double center_y = s.pos().y();
-  double radius = s.radius();
+  float center_x = s.pos().x();
+  float center_y = s.pos().y();
+  float radius = s.radius();
   
   // Loop over points in the upper-right quadrant of the circle
-  for(double x = 0; x <= radius*1.1; x++) {
-    for(double y = 0; y <= radius*1.1; y++) {
+  for(float x = 0; x <= radius*1.1; x++) {
+    for(float y = 0; y <= radius*1.1; y++) {
       // Is this point within the circle's radius?
-      double dist = sqrt(pow(x, 2) + pow(y, 2));
+      float dist = sqrt(pow(x, 2) + pow(y, 2));
       if(dist < radius) {
         // Set this point, along with the mirrored points in the other three quadrants
         bmp->set(center_x + x + x_offset, center_y + y + y_offset, s.color());

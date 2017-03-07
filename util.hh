@@ -36,9 +36,9 @@ static size_t time_ms() {
   return tv.tv_sec*1000 + tv.tv_usec/1000;
 }
 
-// Generate a random double in a given range
-static double drand(double min, double max) {
-  return ((double)rand() / RAND_MAX) * (max - min) + min;
+// Generate a random float in a given range
+static float drand(float min, float max) {
+  return ((float)rand() / RAND_MAX) * (max - min) + min;
 }
 
 #endif
