@@ -148,18 +148,37 @@ int main(int argc, char** argv) {
 
 // Compute force on all stars and update their positions
 void updateStars() {
-  // Compute the force on each star
+  // Merge stars that have collided
+  for(int i=0; i<stars.size(); i++) {
+    for(int j=i+1; j<stars.size(); j++) {
+      // Short names for star radii
+      float r1 = stars[i].radius();
+      float r2 = stars[j].radius();
+      
+      // Compute a vector between the two points
+      vec2d diff = stars[i].pos() - stars[j].pos();
+      
+      // If the objects are too close, merge them
+      if(diff.magnitude() < (r1 + r2)) {
+        // Replace the ith star with the merged one
+        stars[i] = stars[i].merge(stars[j]);
+        // Delete the jth star
+        stars.erase(stars.begin() + j);
+        j--;
+      }
+    }
+  }
+  
+  // Compute the force on each star and update its position and velocity
   for(int i=0; i<stars.size(); i++) {
     // Loop over all other stars to compute their effect on this one
     for(int j=0; j<stars.size(); j++) {
       // Don't compute the effect of this star on itself
       if(i == j) continue;
       
-      // Short names for important values
+      // Short names for star masses
       float m1 = stars[i].mass();
       float m2 = stars[j].mass();
-      float r1 = stars[i].radius();
-      float r2 = stars[j].radius();
       
       // Compute a vector between the two points
       vec2d diff = stars[i].pos() - stars[j].pos();
@@ -167,29 +186,17 @@ void updateStars() {
       // Compute the distance between the two points
       float dist = diff.magnitude();
       
-      // If the objects are too close, merge them
-      if(dist < (r1 + r2)) {
-        // Replace the ith star with the merged one
-        stars[i] = stars[i].merge(stars[j]);
-        // Delete the jth star
-        stars.erase(stars.begin() + j);
-        j--;
-        
-      } else {
-        // Normalize the difference vector to be a unit vector
-        diff = diff.normalized();
-      
-        // Compute the force between these two stars
-        vec2d force = -diff * G * m1 * m2 / pow(dist, 2);
-      
-        // Apply the force to both stars
-        stars[i].addForce(force);
-      }
+      // Normalize the difference vector to be a unit vector
+      diff = diff.normalized();
+    
+      // Compute the force between these two stars
+      vec2d force = -diff * G * m1 * m2 / pow(dist, 2);
+    
+      // Apply the force to both stars
+      stars[i].addForce(force);
     }
-  }
-  
-  // Apply the effects of the current force on each star
-  for(int i=0; i<stars.size(); i++) {
+    
+    // Update the star's position and velocity
     stars[i].update(DT);
   }
 }
