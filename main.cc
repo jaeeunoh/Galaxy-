@@ -14,8 +14,8 @@
 using namespace std;
 
 // Screen size
-#define WIDTH 640
-#define HEIGHT 480
+#define WIDTH 800
+#define HEIGHT 600
 
 // Minimum time between clicks
 #define CREATE_INTERVAL 1000
@@ -195,7 +195,7 @@ void updateStars() {
 // Create a circle of stars moving in the same direction around the center of mass
 void addRandomGalaxy(double center_x, double center_y) {
   // Random number of stars
-  int count = rand() % 1000 + 1000;
+  int count = rand() % 500 + 500;
   
   // Random radius
   double radius = drand(50, 200);
@@ -223,7 +223,7 @@ void addRandomGalaxy(double center_x, double center_y) {
     vec2d vel = vec2d(-cos(angle), sin(angle)) * sqrt(point_radius) * direction * drand(0.25, 1.25);
     
     // Create a new random color for the star
-    rgb32 color = rgb32(rand() % 64 + 192, rand() % 64 + 192, 128);
+    rgb32 color = rgb32(rand() % 64 + 192, rand() % 64 + 192, rand() % 64 + 128);
     
     // Add the star with a mass dependent on distance from the center of the "galaxy"
     stars.push_back(star(10 / sqrt(pos.magnitude()), pos + center, vel, color));

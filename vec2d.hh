@@ -8,13 +8,13 @@
 class vec2d {
 public:
   // Create a vector
-  vec2d(double x, double y) : _x(x), _y(y) {}
+  vec2d(float x, float y) : _x(x), _y(y) {}
   
   vec2d() : _x(0), _y(0) {}
   
   // Getters for x, y, and z
-  double x() { return _x; }
-  double y() { return _y; }
+  float x() { return _x; }
+  float y() { return _y; }
   
   // Add another vector to this one and return the result
   vec2d operator+(const vec2d& other) {
@@ -46,36 +46,36 @@ public:
   }
   
   // Multiply this vector by a scalar and return the result
-  vec2d operator*(double scalar) {
+  vec2d operator*(float scalar) {
     return vec2d(_x*scalar, _y*scalar);
   }
   
   // Multiply this vector by a scalar and update in place
-  vec2d& operator*=(double scalar) {
+  vec2d& operator*=(float scalar) {
     _x *= scalar;
     _y *= scalar;
     return *this;
   }
   
   // Divide this vector by a scalar and return the result
-  vec2d operator/(double scalar) {
+  vec2d operator/(float scalar) {
     return vec2d(_x/scalar, _y/scalar);
   }
   
   // Divide this vector by a scalar and update in place
-  vec2d& operator/=(double scalar) {
+  vec2d& operator/=(float scalar) {
     _x /= scalar;
     _y /= scalar;
     return *this;
   }
   
   // Compute the dot product of this vector with another vector
-  double operator*(const vec2d& other) {
+  float operator*(const vec2d& other) {
     return _x*other._x + _y*other._y;
   }
   
   // Compute the magnitude of this vector
-  double magnitude() {
+  float magnitude() {
     return sqrt(pow(_x, 2) + pow(_y, 2));
   }
   
@@ -85,8 +85,8 @@ public:
   }
   
 private:
-  double _x;
-  double _y;
+  float _x;
+  float _y;
 };
 
 #endif

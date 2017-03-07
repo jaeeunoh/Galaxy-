@@ -74,8 +74,8 @@ public:
   
   // Shift all of the pixels in this bitmap up one position
   void shiftUp() {
-    for(int x=0; x<_width; x++) {
-      for(int y=0; y<_height-1; y++) {
+    for(int y=0; y<_height-1; y++) {
+      for(int x=0; x<_width; x++) {
         _data[x+y*_width] = _data[x+(y+1)*_width];
       }
     }
@@ -87,8 +87,8 @@ public:
   
   // Shift all of the pixels in this bitmap down one position
   void shiftDown() {
-    for(int x=0; x<_width; x++) {
-      for(int y=_height-1; y>0; y--) {
+    for(int y=_height-1; y>0; y--) {
+      for(int x=0; x<_width; x++) {
         _data[x+y*_width] = _data[x+(y-1)*_width];
       }
     }
@@ -100,8 +100,8 @@ public:
   
   // Shift all of the pixels in this bitmap left one position
   void shiftLeft() {
-    for(int x=0; x<_width-1; x++) {
-      for(int y=0; y<_height; y++) {
+    for(int y=0; y<_height; y++) {
+      for(int x=0; x<_width-1; x++) {
         _data[x+y*_width] = _data[x+y*_width+1];
       }
     }
@@ -113,8 +113,8 @@ public:
   
   // Shift all of the pixels in this bitmap right one position
   void shiftRight() {
-    for(int x=_width-1; x>0; x--) {
-      for(int y=0; y<_height; y++) {
+    for(int y=0; y<_height; y++) {
+      for(int x=_width-1; x>0; x--) {
         _data[x+y*_width] = _data[x+y*_width-1];
       }
     }
