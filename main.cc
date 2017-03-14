@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <ctime>
 #include <vector>
-#include <pthread.h> 
+#include <pthread.h>
 
 #include <SDL.h>
 
@@ -27,8 +27,8 @@ using namespace std;
 // Gravitational constant
 #define G 1
 
-// Number of worker threads 
-#define NUM_WORKER_THREADS 4 
+// Number of worker threads
+#define NUM_WORKER_THREADS 4
 
 // Update all stars in the simulation
 void updateStars();
@@ -46,10 +46,10 @@ vector<star> stars;
 int x_offset = 0;
 int y_offset = 0;
 
-// Creating barrier 
+// Creating barrier
 pthread_barrier_t barrier;
 
-void* thread_fn (void* threadnum); 
+void* thread_fn (void* threadnum);
 
 /**
  * Entry point for the program
@@ -72,12 +72,11 @@ int main(int argc, char** argv) {
   // Save the last time the mouse was clicked
   bool mouse_up = true;
 
-  pthread_barrier_init(&barrier, NULL, NUM_WORKER_THREADS + 1);       
-  pthread_t threads[NUM_WORKER_THREADS]; 
+  pthread_barrier_init(&barrier, NULL, NUM_WORKER_THREADS + 1);
+  pthread_t threads[NUM_WORKER_THREADS];
   for (int i = 0; i < NUM_WORKER_THREADS; i++) {
-    pthread_create(&threads[i], NULL, thread_fn, &i);  
+    pthread_create(&threads[i], NULL, thread_fn, &i);
   }
-
 
   // Loop until we get a quit event
   while(running) {
@@ -185,8 +184,8 @@ void updateStars() {
       }
     }
   }
-  pthread_barrier_wait(&barrier); 
-  pthread_barrier_wait(&barrier); 
+  pthread_barrier_wait(&barrier);
+  pthread_barrier_wait(&barrier);
 }
 // Compute the force on each star and update its position and velocity
 // Loop over all other stars to compute their effect on this one
@@ -195,7 +194,7 @@ void* thread_fn (void* threadnum) {
 
   // Waiting for work 
   while (1) { 
-    pthread_barrier_wait(&barrier);  
+     pthread_barrier_wait(&barrier);  pthread_barrier_wait(&barrier);  
 
     for(int i = 0; i<stars.size(); i++) {
       if (i % NUM_WORKER_THREADS == num) {
