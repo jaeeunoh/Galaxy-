@@ -3,7 +3,7 @@
 #include <ctime>
 #include <vector>
 #include <pthread.h>
-
+#include <time.h> 
 #include <SDL.h>
 
 #include "bitmap.hh"
@@ -28,7 +28,7 @@ using namespace std;
 #define G 1
 
 // Number of worker threads
-#define NUM_WORKER_THREADS 4
+#define NUM_WORKER_THREADS 8
 
 // Update all stars in the simulation
 void updateStars();
@@ -74,12 +74,18 @@ int main(int argc, char** argv) {
 
   pthread_barrier_init(&barrier, NULL, NUM_WORKER_THREADS + 1);
   pthread_t threads[NUM_WORKER_THREADS];
+  int thread_numbers[NUM_WORKER_THREADS]; 
   for (int i = 0; i < NUM_WORKER_THREADS; i++) {
-    pthread_create(&threads[i], NULL, thread_fn, &i);
+    thread_numbers[i] = i; 
+    pthread_create(&threads[i], NULL, thread_fn, &thread_numbers[i]);
   }
 
   // Loop until we get a quit event
+
+  printf("number of threads, number of stars, time elapsed\n"); 
   while(running) {
+
+    clock_t start = clock(); 
     // Process events
     SDL_Event event;
     while(SDL_PollEvent(&event) == 1) {
@@ -139,10 +145,10 @@ int main(int argc, char** argv) {
           stars[i].pos().y() != stars[i].pos().y()) {
         stars.erase(stars.begin()+i);
         i--;
-        continue;
+      }      continue;
       }
-    }
-
+    
+  
     // Compute forces on all stars and update
     updateStars();
 
@@ -157,9 +163,13 @@ int main(int argc, char** argv) {
 
     // Display the rendered frame
     ui.display(bmp);
-  }
 
-  return 0;
+    clock_t stop = clock(); 
+    double elapsed = (double) (stop - start);
+    printf("%d, %zu, %f\n", NUM_WORKER_THREADS, stars.size(), elapsed);
+  }
+ 
+return 0;
 }
 
 // Compute force on all stars and update their positions
@@ -192,9 +202,9 @@ void updateStars() {
 void* thread_fn (void* threadnum) {
   int num = *(int*)threadnum;
 
-  // Waiting for work 
-  while (1) { 
-     pthread_barrier_wait(&barrier);  pthread_barrier_wait(&barrier);  
+  // Waiting for work
+  while (1) {
+     pthread_barrier_wait(&barrier); 
 
     for(int i = 0; i<stars.size(); i++) {
       if (i % NUM_WORKER_THREADS == num) {
@@ -226,6 +236,7 @@ void* thread_fn (void* threadnum) {
         stars[i].update(DT);
       }
     }
+     pthread_barrier_wait(&barrier);
   }
 }
 
