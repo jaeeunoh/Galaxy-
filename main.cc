@@ -81,16 +81,12 @@ int main(int argc, char** argv) {
   }
 
   // Loop until we get a quit event
- 
-  struct timeval tv;
-  time_t start_t, end_t; 
 
   printf("number of threads, number of stars, time elapsed\n"); 
   while(running) {
 
     // Starting time
-    gettimeofday (&tv, NULL); 
-    start_t = (tv.tv_sec*1000000) + tv.tv_usec; 
+    size_t start_t = time_ms(); 
 
     // Process events
     SDL_Event event;
@@ -170,8 +166,8 @@ int main(int argc, char** argv) {
     // Display the rendered frame
     ui.display(bmp);
 
-    gettimeofday (&tv, NULL); 
-    end_t = (tv.tv_sec*1000000) + tv.tv_usec; 
+    size_t end_t = time_ms(); 
+
     double elapsed = (double) end_t - start_t;  
     printf("%d, %zu, %f\n", NUM_WORKER_THREADS, stars.size(), elapsed);
   }
