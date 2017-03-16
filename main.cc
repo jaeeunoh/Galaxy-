@@ -28,7 +28,7 @@ using namespace std;
 #define G 1
 
 // Number of worker threads
-#define NUM_WORKER_THREADS 8
+#define NUM_WORKER_THREADS 1
 
 // Update all stars in the simulation
 void updateStars();
@@ -81,11 +81,17 @@ int main(int argc, char** argv) {
   }
 
   // Loop until we get a quit event
+ 
+  struct timeval tv;
+  time_t start_t, end_t; 
 
   printf("number of threads, number of stars, time elapsed\n"); 
   while(running) {
 
-    clock_t start = clock(); 
+    // Starting time
+    gettimeofday (&tv, NULL); 
+    start_t = (tv.tv_sec*1000000) + tv.tv_usec; 
+
     // Process events
     SDL_Event event;
     while(SDL_PollEvent(&event) == 1) {
@@ -164,8 +170,9 @@ int main(int argc, char** argv) {
     // Display the rendered frame
     ui.display(bmp);
 
-    clock_t stop = clock(); 
-    double elapsed = (double) (stop - start);
+    gettimeofday (&tv, NULL); 
+    end_t = (tv.tv_sec*1000000) + tv.tv_usec; 
+    double elapsed = (double) end_t - start_t;  
     printf("%d, %zu, %f\n", NUM_WORKER_THREADS, stars.size(), elapsed);
   }
  
